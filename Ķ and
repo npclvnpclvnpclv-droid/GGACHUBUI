@@ -1,0 +1,546 @@
+
+--==================================================
+-- NPCLV1㋡ | ULTIMATE UI
+-- Loading + Logo Button + Draggable Menu
+-- Mobile + PC | Roblox Studio
+--==================================================
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ลบ UI เก่าที่ชื่อเดียวกัน
+local old = playerGui:FindFirstChild("NPCLV1㋡")
+if old then old:Destroy() end
+
+--==================================================
+-- CONFIG
+--==================================================
+
+local LOAD_TIME = 3.5
+local STAR_COUNT = 60
+
+local GREEN = Color3.fromRGB(0, 255, 130)
+local LIGHT_GREEN = Color3.fromRGB(120, 255, 190)
+local BLUE = Color3.fromRGB(100, 200, 255)
+local PINK = Color3.fromRGB(255, 100, 200)
+local BG = Color3.fromRGB(12, 12, 22)
+local PANEL = Color3.fromRGB(20, 24, 36)
+
+local NPC_NAME = "NPCLV1㋡"
+local SECRET_ANSWER = "กะเพราไก่"
+
+local function makeTween(object, duration, properties, style, direction)
+    local info = TweenInfo.new(
+        duration,
+        style or Enum.EasingStyle.Quad,
+        direction or Enum.EasingDirection.Out
+    )
+    local t = TweenService:Create(object, info, properties)
+    t:Play()
+    return t
+end
+
+local function corner(object, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius or 8)
+    c.Parent = object
+    return c
+end
+
+local function stroke(object, color, thickness)
+    local s = Instance.new("UIStroke")
+    s.Color = color
+    s.Thickness = thickness or 1
+    s.Parent = object
+    return s
+end
+
+local function button(parent, name, text, position, size, color)
+    local b = Instance.new("TextButton")
+    b.Name = name
+    b.Text = text
+    b.Position = position
+    b.Size = size
+    b.BackgroundColor3 = color or PANEL
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.TextSize = 14
+    b.Font = Enum.Font.GothamBold
+    b.BorderSizePixel = 0
+    b.Parent = parent
+    corner(b, 8)
+    return b
+end
+
+--==================================================
+-- SCREEN GUI
+--==================================================
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "NPCLV1㋡"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.DisplayOrder = 100
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = playerGui
+
+--==================================================
+-- LOADING SCREEN
+--==================================================
+
+local loading = Instance.new("Frame")
+loading.Name = "LoadingScreen"
+loading.Size = UDim2.fromScale(1, 1)
+loading.Position = UDim2.fromScale(0, -1)
+loading.BackgroundColor3 = BG
+loading.BorderSizePixel = 0
+loading.ZIndex = 10
+loading.Parent = gui
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 12, 25)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(18, 24, 45)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 25))
+})
+gradient.Rotation = 90
+gradient.Parent = loading
+
+-- แสงเรืองประดับมุม
+for _, p in ipairs({
+    UDim2.fromScale(0.05, 0.1),
+    UDim2.fromScale(0.95, 0.1),
+    UDim2.fromScale(0.05, 0.9),
+    UDim2.fromScale(0.95, 0.9)
+}) do
+    local glow = Instance.new("Frame")
+    glow.Size = UDim2.fromOffset(120, 120)
+    glow.AnchorPoint = Vector2.new(0.5, 0.5)
+    glow.Position = p
+    glow.BackgroundColor3 = GREEN
+    glow.BackgroundTransparency = 0.88
+    glow.BorderSizePixel = 0
+    glow.ZIndex = 11
+    glow.Parent = loading
+    corner(glow, 100)
+end
+
+-- ดาวเคลื่อนไหว 60 ดวง
+local stars = {}
+local starsActive = true
+
+for i = 1, STAR_COUNT do
+    local star = Instance.new("Frame")
+    local size = math.random(1, 3)
+    star.Name = "Star" .. i
+    star.Size = UDim2.fromOffset(size, size)
+    star.Position = UDim2.fromScale(
+        math.random(0, 100) / 100,
+        math.random(0, 100) / 100
+    )
+    star.BackgroundColor3 = Color3.new(1, 1, 1)
+    star.BackgroundTransparency = math.random(4, 8) / 10
+    star.BorderSizePixel = 0
+    star.ZIndex = 12
+    star.Parent = loading
+    corner(star, 10)
+    table.insert(stars, star)
+
+    task.spawn(function()
+        while starsActive and star.Parent do
+            local duration = math.random(5, 10) / 10
+            makeTween(star, duration, {
+                Position = UDim2.fromScale(
+                    math.clamp(star.Position.X.Scale + math.random(-5, 5) / 100, 0, 1),
+                    math.clamp(star.Position.Y.Scale + math.random(-5, 5) / 100, 0, 1)
+                ),
+                BackgroundTransparency = math.random(3, 9) / 10
+            }, Enum.EasingStyle.Sine)
+            task.wait(duration)
+        end
+    end)
+end
+
+-- หัวข้อ
+local title = Instance.new("TextLabel")
+title.Name = "LoadingTitle"
+title.Size = UDim2.new(0.9, 0, 0, 75)
+title.Position = UDim2.new(0.05, 0, 0.29, 0)
+title.BackgroundTransparency = 1
+title.Text = "★ NPCLV1㋡ ★"
+title.TextColor3 = GREEN
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.ZIndex = 13
+title.Parent = loading
+
+local titleLimit = Instance.new("UITextSizeConstraint")
+titleLimit.MinTextSize = 20
+titleLimit.MaxTextSize = 46
+titleLimit.Parent = title
+
+local titleStroke = stroke(title, GREEN, 1)
+titleStroke.Transparency = 0.8
+
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(0.9, 0, 0, 35)
+subtitle.Position = UDim2.new(0.05, 0, 0.39, 0)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "ULTIMATE USER INTERFACE"
+subtitle.TextColor3 = BLUE
+subtitle.TextSize = 15
+subtitle.Font = Enum.Font.Gotham
+subtitle.ZIndex = 13
+subtitle.Parent = loading
+
+-- แถบโหลด
+local barBG = Instance.new("Frame")
+barBG.Size = UDim2.new(0.72, 0, 0, 8)
+barBG.Position = UDim2.new(0.08, 0, 0.66, 0)
+barBG.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+barBG.BorderSizePixel = 0
+barBG.ZIndex = 13
+barBG.Parent = loading
+corner(barBG, 10)
+
+local fill = Instance.new("Frame")
+fill.Size = UDim2.new(0, 0, 1, 0)
+fill.BackgroundColor3 = GREEN
+fill.BorderSizePixel = 0
+fill.ZIndex = 14
+fill.Parent = barBG
+corner(fill, 10)
+
+local fillGradient = Instance.new("UIGradient")
+fillGradient.Color = ColorSequence.new(GREEN, LIGHT_GREEN)
+fillGradient.Parent = fill
+
+local percent = Instance.new("TextLabel")
+percent.Size = UDim2.fromOffset(65, 25)
+percent.AnchorPoint = Vector2.new(1, 0)
+percent.Position = UDim2.new(0.96, 0, 0.62, 0)
+percent.BackgroundTransparency = 1
+percent.Text = "0%"
+percent.TextColor3 = GREEN
+percent.TextSize = 16
+percent.Font = Enum.Font.GothamBold
+percent.ZIndex = 14
+percent.Parent = loading
+
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(0.9, 0, 0, 30)
+status.Position = UDim2.new(0.05, 0, 0.7, 0)
+status.BackgroundTransparency = 1
+status.Text = "กำลังเริ่มต้นระบบ..."
+status.TextColor3 = BLUE
+status.TextSize = 14
+status.Font = Enum.Font.Gotham
+status.ZIndex = 14
+status.Parent = loading
+
+local welcome = Instance.new("TextLabel")
+welcome.Size = UDim2.new(0.9, 0, 0, 55)
+welcome.Position = UDim2.new(0.05, 0, 0.48, 0)
+welcome.BackgroundTransparency = 1
+welcome.Text = "ยินดีต้อนรับสู่ NPCLV1㋡"
+welcome.TextColor3 = LIGHT_GREEN
+welcome.TextScaled = true
+welcome.Font = Enum.Font.GothamBold
+welcome.TextTransparency = 1
+welcome.ZIndex = 14
+welcome.Parent = loading
+
+--==================================================
+-- MAIN MENU
+--==================================================
+
+local main = Instance.new("Frame")
+main.Name = "MainFrame"
+main.Size = UDim2.fromOffset(320, 250)
+main.Position = UDim2.new(0.5, -160, 0.5, -125)
+main.BackgroundColor3 = PANEL
+main.BorderSizePixel = 0
+main.Visible = false
+main.Active = true
+main.ZIndex = 2
+main.Parent = gui
+corner(main, 12)
+stroke(main, GREEN, 1.5)
+
+local mainGradient = Instance.new("UIGradient")
+mainGradient.Color = ColorSequence.new(
+    Color3.fromRGB(27, 35, 45),
+    Color3.fromRGB(13, 17, 27)
+)
+mainGradient.Rotation = 90
+mainGradient.Parent = main
+
+-- แถบชื่อ
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 42)
+titleBar.BackgroundColor3 = Color3.fromRGB(25, 37, 43)
+titleBar.BorderSizePixel = 0
+titleBar.Active = true
+titleBar.ZIndex = 3
+titleBar.Parent = main
+corner(titleBar, 10)
+
+local heading = Instance.new("TextLabel")
+heading.Name = "TitleLabel"
+heading.Size = UDim2.new(1, -100, 1, 0)
+heading.Position = UDim2.new(0, 12, 0, 0)
+heading.BackgroundTransparency = 1
+heading.Text = "★ NPCLV1㋡"
+heading.TextColor3 = GREEN
+heading.TextSize = 16
+heading.Font = Enum.Font.GothamBold
+heading.TextXAlignment = Enum.TextXAlignment.Left
+heading.Active = true
+heading.ZIndex = 4
+heading.Parent = titleBar
+
+local minimize = button(
+    titleBar, "MinimizeButton", "−",
+    UDim2.new(1, -65, 0, 7),
+    UDim2.fromOffset(25, 27),
+    Color3.fromRGB(0, 100, 180)
+)
+minimize.ZIndex = 5
+
+local close = button(
+    titleBar, "CloseButton", "×",
+    UDim2.new(1, -33, 0, 7),
+    UDim2.fromOffset(25, 27),
+    Color3.fromRGB(150, 35, 55)
+)
+close.ZIndex = 5
+
+local answerButton = button(
+    main, "ShowAnswerButton", "ดูคำตอบ",
+    UDim2.new(0, 15, 0, 62),
+    UDim2.new(1, -30, 0, 40),
+    Color3.fromRGB(20, 70, 58)
+)
+answerButton.TextColor3 = LIGHT_GREEN
+answerButton.ZIndex = 4
+stroke(answerButton, GREEN, 1)
+
+local answerLabel = Instance.new("TextLabel")
+answerLabel.Name = "AnswerLabel"
+answerLabel.Size = UDim2.new(1, -30, 0, 75)
+answerLabel.Position = UDim2.new(0, 15, 0, 115)
+answerLabel.BackgroundColor3 = BG
+answerLabel.Text = NPC_NAME .. "\nเฉลยคือ: " .. SECRET_ANSWER
+answerLabel.TextColor3 = Color3.new(1, 1, 1)
+answerLabel.TextSize = 16
+answerLabel.TextWrapped = true
+answerLabel.Font = Enum.Font.Gotham
+answerLabel.Visible = false
+answerLabel.ZIndex = 4
+answerLabel.Parent = main
+corner(answerLabel, 8)
+stroke(answerLabel, BLUE, 1)
+
+local footer = Instance.new("TextLabel")
+footer.Size = UDim2.new(1, -20, 0, 20)
+footer.Position = UDim2.new(0, 10, 1, -25)
+footer.BackgroundTransparency = 1
+footer.Text = "NPCLV1㋡ • UI SYSTEM"
+footer.TextColor3 = BLUE
+footer.TextSize = 10
+footer.Font = Enum.Font.Gotham
+footer.ZIndex = 4
+footer.Parent = main
+
+--==================================================
+-- LOGO OPEN BUTTON
+--==================================================
+
+local toggle = Instance.new("ImageButton")
+toggle.Name = "ToggleButton"
+toggle.Size = UDim2.fromOffset(64, 64)
+toggle.Position = UDim2.new(0, 20, 0.4, 0)
+toggle.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+toggle.BorderSizePixel = 0
+toggle.Image = "" -- ใส่ rbxassetid://ID ของโลโก้ที่อัปโหลดแล้ว
+toggle.ScaleType = Enum.ScaleType.Fit
+toggle.ZIndex = 5
+toggle.Parent = gui
+corner(toggle, 10)
+stroke(toggle, Color3.fromRGB(0, 255, 200), 2)
+
+local logoLabel = Instance.new("TextLabel")
+logoLabel.Size = UDim2.new(1.5, 0, 0, 18)
+logoLabel.Position = UDim2.new(-0.25, 0, 1, 2)
+logoLabel.BackgroundTransparency = 1
+logoLabel.Text = "NPCLV1㋡"
+logoLabel.TextColor3 = GREEN
+logoLabel.TextSize = 11
+logoLabel.Font = Enum.Font.GothamBold
+logoLabel.ZIndex = 5
+logoLabel.Parent = toggle
+
+--==================================================
+-- WINDOW CONTROLS
+--==================================================
+
+local minimized = false
+local showingAnswer = false
+local fullSize = UDim2.fromOffset(320, 250)
+local smallSize = UDim2.fromOffset(320, 42)
+
+toggle.Activated:Connect(function()
+    main.Visible = not main.Visible
+end)
+
+close.Activated:Connect(function()
+    main.Visible = false
+end)
+
+minimize.Activated:Connect(function()
+    minimized = not minimized
+
+    if minimized then
+        minimize.Text = "+"
+        answerButton.Visible = false
+        answerLabel.Visible = false
+        footer.Visible = false
+        makeTween(main, 0.2, {Size = smallSize})
+    else
+        minimize.Text = "−"
+        answerButton.Visible = true
+        answerLabel.Visible = showingAnswer
+        footer.Visible = true
+        makeTween(main, 0.2, {Size = fullSize})
+    end
+end)
+
+answerButton.Activated:Connect(function()
+    showingAnswer = not showingAnswer
+    answerLabel.Visible = showingAnswer
+    answerButton.Text = showingAnswer and "ซ่อนคำตอบ" or "ดูคำตอบ"
+end)
+
+--==================================================
+-- DRAG MENU AND LOGO
+--==================================================
+
+local function makeDraggable(target, handle)
+    local dragging = false
+    local dragStart
+    local startPos
+    local activeTouch
+
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            dragging = true
+            dragStart = input.Position
+            startPos = target.Position
+            activeTouch = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+
+        if input == activeTouch
+            or input.UserInputType == Enum.UserInputType.MouseMovement then
+
+            local delta = input.Position - dragStart
+            target.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+            activeTouch = nil
+        end
+    end)
+end
+
+makeDraggable(main, titleBar)
+makeDraggable(toggle, toggle)
+
+--==================================================
+-- LOADING ANIMATION
+--==================================================
+
+makeTween(loading, 0.8, {
+    Position = UDim2.fromScale(0, 0)
+}, Enum.EasingStyle.Quint)
+
+task.spawn(function()
+    local start = os.clock()
+    local messages = {
+        "กำลังเริ่มต้นระบบ...",
+        "กำลังโหลดทรัพยากร...",
+        "กำลังเตรียมอินเทอร์เฟซ...",
+        "กำลังปรับแต่งเอฟเฟกต์...",
+        "พร้อมแล้ว!"
+    }
+
+    while loading.Parent do
+        local progress = math.clamp(
+            (os.clock() - start) / LOAD_TIME,
+            0,
+            1
+        )
+
+        percent.Text = math.floor(progress * 100) .. "%"
+        fill.Size = UDim2.new(progress, 0, 1, 0)
+
+        local index = math.clamp(
+            math.floor(progress * (#messages - 1)) + 1,
+            1,
+            #messages
+        )
+        status.Text = messages[index]
+
+        if progress >= 1 then break end
+        RunService.RenderStepped:Wait()
+    end
+
+    percent.Text = "100%"
+    status.Text = "พร้อมแล้ว!"
+
+    makeTween(welcome, 0.6, {TextTransparency = 0})
+    task.wait(0.8)
+
+    starsActive = false
+
+    for _, star in ipairs(stars) do
+        if star.Parent then
+            makeTween(star, 0.5, {BackgroundTransparency = 1})
+        end
+    end
+
+    local camera = workspace.CurrentCamera
+    local height = camera and camera.ViewportSize.Y or 1000
+
+    makeTween(loading, 0.9, {
+        Position = UDim2.new(0, 0, 0, height * 1.6)
+    }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+
+    makeTween(welcome, 0.4, {TextTransparency = 1})
+
+    task.wait(1)
+    if loading.Parent then
+        loading:Destroy()
+    end
+end)
+
+print("NPCLV1㋡ UI loaded successfully")
